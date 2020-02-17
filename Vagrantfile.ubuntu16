@@ -1,0 +1,62 @@
+Vagrant.configure("2") do |config|
+	config.vm.box = "ubuntu/xenial64"
+	config.vm.hostname = "kmaster.example.com"
+	config.vm.network "private_network", :adapter=> 2 , ip: "192.168.33.12"
+	config.vm.network "public_network", :adapter=>3 , type: "dhcp"
+	config.vm.provider "virtualbox" do |vb|
+		vb.memory = "2048"
+		vb.cpus = "2"
+	end
+	config.vm.provision "shell", inline: <<-SHELL
+		# Installing Docker
+		sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+		sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+		sudo apt-get update 2> /dev/null
+		sudo apt-cache policy docker-ce 2> /dev/null
+		sudo apt-get install -y docker-ce
+
+		# Installing Curl
+		sudo apt-get update && apt-get install -y apt-transport-https curl
+		sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+		# Installing Kubernetes
+		sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+		deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+		sudo apt-get update
+		sudo apt-get install -y kubelet kubectl kubeadm
+		sudo kubeadm config images pull
+
+		# Installing Jenkins
+		sudo apt-get install openjdk-8-jdk -y
+		sudo wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+		sudo echo deb http://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list
+		sudo apt-get update
+		sudo apt-get install jenkins -y
+
+		# Installing Git
+		sudo apt-get install git -y
+
+		# Installing Ansible
+		sudo apt-get install ansible -y
+
+		# Installing Python3.5
+		sudo add-apt-repository ppa:deadsnakes/ppa
+		sudo apt update
+    		sudo apt install python3.5
+
+		# Installing Pip3.5
+		sudo curl https://bootstrap.pypa.io/get-pip.py | sudo -H python3.5
+		sudo pip3.5 install virtualenv
+
+		# Installing Apache2
+		sudo apt-get install apache2 -y
+
+		# Installing wsgi
+		sudo apt-get install python3-pip libapache2-mod-wsgi-py3 -y
+		sudo apt-get install python3.5-dev -y
+
+		SHELL
+end
+
+
