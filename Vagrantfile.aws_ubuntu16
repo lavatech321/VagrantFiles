@@ -1,0 +1,41 @@
+require 'vagrant-aws'
+Vagrant.configure("2") do |config|
+  config.vm.box = 'aws-dummy'
+  config.vm.provider 'aws' do |aws, override|
+    aws.access_key_id = 'AKIA56MWGFVLS5B7S55R'                 
+    aws.secret_access_key = 'Q/auIc5XSSw1rkv4m8acsw7um8gQR7PlKrc5bhGR'   
+    aws.keypair_name = 'newyo5'           
+    aws.instance_type = "t2.micro"     
+    aws.region = 'us-east-1'
+    aws.ami = 'ami-07b4156579ea1d7ba'                        
+    aws.security_groups = ['WebSite']             
+    override.ssh.username = 'ubuntu'
+    override.ssh.private_key_path = './newyo5.pem'
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"   
+    sudo apt-get update
+    apt-cache policy docker-ce
+    sudo apt-get install -y docker-ce
+    sudo apt-get update
+    sudo apt-get install openjdk-8-jdk -y
+    sudo wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+    sudo echo deb http://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list
+    sudo apt-get update
+    sudo apt-get install jenkins -y
+    sudo hostnamectl set-hostname jmaster.example.com
+    sudo apt-get install git -y
+    sudo apt-get install ansible -y
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt update
+    sudo apt install python3.5
+    sudo curl https://bootstrap.pypa.io/get-pip.py | sudo -H python3.5
+    sudo pip3.5 install virtualenv
+    sudo apt-get install apache2 -y
+    sudo apt-get install python3-pip apache2 libapache2-mod-wsgi-py3
+    sudo apt-get install python3.5-dev
+
+  SHELL
+end
