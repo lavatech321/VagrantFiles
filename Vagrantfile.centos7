@@ -1,0 +1,60 @@
+Vagrant.configure(2) do |config|
+config.vm.box = "centos7.1"
+config.vm.hostname = "sandbox.example.com"
+config.vm.network "public_network", :adapter=>2 , type: "dhcp"
+config.vm.network "private_network", :adapter=> 2 , ip: "192.168.30.12"
+config.vm.provider "virtualbox" do |vb|
+		vb.memory = "2048"
+		vb.cpus = "2"
+end
+
+config.vm.provision "shell", inline: <<-SHELL
+
+		# Installing Docker
+		sudo yum install -y docker 2> /dev/null
+
+		# Installing and starting Docker
+		sudo echo DOCKER_STORAGE_OPTIONS="--storage-driver devicemapper" > /etc/sysconfig/docker-storage
+		sudo systemctl start docker 2> /dev/null
+		sudo systemctl enable docker 2> /dev/null
+		sudo setenforce 0
+
+		# Installing and starting Jenkins
+		sudo yum install java-1.8.0-openjdk -y
+		sudo wget https://pkg.jenkins.io/redhat-stable/jenkins-2.204.1-1.1.noarch.rpm
+		sudo yum localinstall jenkins-2.204.1-1.1.noarch.rpm -y
+		sudo systemctl start jenkins.service
+		sudo systemctl enable jenkins.service
+
+		# Installing Git
+		sudo yum update nss curl libcurl -y
+		sudo yum install git -y
+		
+		# Installing ansible
+		sudo yum install ansible -y
+
+   		# Installing Docker-Compose
+		sudo curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+		sudo chmod +x /usr/local/bin/docker-compose
+
+		#Installing python3
+		sudo yum -y install yum-utils
+		sudo yum -y groupinstall development
+		sudo yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+		sudo yum -y install python36u python36u-pip
+		sudo yum install python35u python35u-pip	
+
+		# Installing Puppet -
+		sudo rpm -ivh https://yum.puppet.com/puppet6/puppet6-release-el-7.noarch.rpm
+		sudo yum install puppetserver puppet -y
+		sudo systemctl stop firewalld && systemctl disable firewalld
+
+		#Installing google-chrome
+		wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+		sudo yum localinstall google-chrome-stable_current_x86_64.rpm
+
+		
+		
+	SHELL
+
+end
